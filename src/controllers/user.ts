@@ -2,6 +2,7 @@ import { Context } from "Koa";
 import { User } from "../entity/user";
 import { AppDataSource } from "../data-source";
 import { createSecretKey } from "crypto";
+import { ForbiddenException, NotFoundException } from "../exception";
 
 export default class UserController {
   public static async listUsers(ctx: Context) {
@@ -22,13 +23,23 @@ export default class UserController {
       ctx.status = 200;
       ctx.body = result;
     } else {
-      ctx.status = 404;
+      // ctx.status = 404;
+      throw new NotFoundException();
     }
   }
 
   public static async updateUser(ctx: Context) {
+    console.log("ctx.state.user", ctx.state.user);
+
     const UserResponity = AppDataSource.getRepository(User);
     const id = ctx.params.id;
+    if (id != ctx.state.user.id) {
+      // ctx.body = {
+      //   message: "没有权限操作",
+      // };
+      // return;
+      throw new ForbiddenException();
+    }
     const newData = ctx.request.body;
 
     /*
@@ -62,6 +73,13 @@ export default class UserController {
 
   public static async deleteUser(ctx: Context) {
     const id = ctx.params.id;
+    if (id != ctx.state.user.id) {
+      // ctx.body = {
+      //   message: "没有权限操作",
+      // };
+      // return;
+      throw new ForbiddenException();
+    }
     const UserResponity = AppDataSource.getRepository(User);
     const user = await UserResponity.findOneBy({
       id,
